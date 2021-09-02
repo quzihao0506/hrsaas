@@ -1,15 +1,44 @@
-// import router from './router'
+import router from './router'
 // import store from './store'
-// import { Message } from 'element-ui'
-// import NProgress from 'nprogress' // progress bar
+import { Message } from 'element-ui'
+import NProgress from 'nprogress' // progress bar
 // import 'nprogress/nprogress.css' // progress bar style
-// import { getToken } from '@/utils/auth' // get token from cookie
+import { getToken } from '@/utils/auth' // get token from cookie
+import store from './store'
 // import getPageTitle from '@/utils/get-page-title'
 
 // NProgress.configure({ showSpinner: false }) // NProgress Configuration
-
+const whiteList = ['/login']
+router.beforeEach(async(to, from, next) => {
+  NProgress.start()
+  const hasToken = getToken()
+  if (hasToken) {
+    if (to.path === '/login') {
+      next({ path: '/' })
+    } else {
+      // 如果用户信息存在,通行
+      const hasGetUserInfo = store.getters.user
+      if (hasGetUserInfo) {
+        next()
+      } else {
+        // 用户信息不存在，重新获取
+        try {
+          await store.dispatch('user/getInfo')
+        } catch (error) {
+          Message.error(error || '获取用户信息失败')
+        }
+      }
+      next()
+    }
+  } else {
+    if (whiteList.indexOf(to.path) > -1) {
+      next()
+    } else {
+      next(`/login?redirect=${to.path}`)
+    }
+  }
+})
 // const whiteList = ['/login'] // no redirect whitelist
-
 // router.beforeEach(async(to, from, next) => {
 //   // start progress bar
 //   NProgress.start()
@@ -58,7 +87,8 @@
 //   }
 // })
 
-// router.afterEach(() => {
-//   // finish progress bar
-//   NProgress.done()
-// })
+router.afterEach(() => {
+  // finish progress bar
+  NProgress.done()
+})
+

@@ -1,97 +1,69 @@
-// import { login, logout, getInfo } from '@/api/user'
-// import { getToken, setToken, removeToken } from '@/utils/auth'
-// import { resetRouter } from '@/router'
+import { getToken, setToken, removeToken } from '@/utils/auth'
+import { login, getInfo } from '@/api/user'
+const state = {
+  // 初始化，从本地缓存读取token
+  // vuex的持久化实现？ 通过本地缓存 + vuex 实现持久化和响应式
+  token: getToken(),
+  userInfo: null
+}
 
-// const getDefaultState = () => {
-//   return {
-//     token: getToken(),
-//     name: '',
-//     avatar: ''
-//   }
-// }
+const mutations = {
+  setToken(state, token) {
+    state.token = token
+    // 存入本地缓存，持久化
+    setToken(token)
+  },
+  removeToken(state) {
+    state.token = null
+    // 清除本地缓存
+    removeToken()
+  },
+  // state中存储user
+  setUser(state, user) {
+    state.userInfo = user
+  },
+  RESET_TOKEN(state) {
+    state.token = null
+    state.userInfo = {}
+  }
+}
 
-// const state = getDefaultState()
-
-// const mutations = {
-//   RESET_STATE: (state) => {
-//     Object.assign(state, getDefaultState())
-//   },
-//   SET_TOKEN: (state, token) => {
-//     state.token = token
-//   },
-//   SET_NAME: (state, name) => {
-//     state.name = name
-//   },
-//   SET_AVATAR: (state, avatar) => {
-//     state.avatar = avatar
-//   }
-// }
-
-// const actions = {
-//   // user login
-//   login({ commit }, userInfo) {
-//     const { username, password } = userInfo
-//     return new Promise((resolve, reject) => {
-//       login({ username: username.trim(), password: password }).then(response => {
-//         const { data } = response
-//         commit('SET_TOKEN', data.token)
-//         setToken(data.token)
-//         resolve()
-//       }).catch(error => {
-//         reject(error)
-//       })
-//     })
-//   },
-
-//   // get user info
-//   getInfo({ commit, state }) {
-//     return new Promise((resolve, reject) => {
-//       getInfo(state.token).then(response => {
-//         const { data } = response
-
-//         if (!data) {
-//           return reject('Verification failed, please Login again.')
-//         }
-
-//         const { name, avatar } = data
-
-//         commit('SET_NAME', name)
-//         commit('SET_AVATAR', avatar)
-//         resolve(data)
-//       }).catch(error => {
-//         reject(error)
-//       })
-//     })
-//   },
-
-//   // user logout
-//   logout({ commit, state }) {
-//     return new Promise((resolve, reject) => {
-//       logout(state.token).then(() => {
-//         removeToken() // must remove  token  first
-//         resetRouter()
-//         commit('RESET_STATE')
-//         resolve()
-//       }).catch(error => {
-//         reject(error)
-//       })
-//     })
-//   },
-
-//   // remove token
-//   resetToken({ commit }) {
-//     return new Promise(resolve => {
-//       removeToken() // must remove  token  first
-//       commit('RESET_STATE')
-//       resolve()
-//     })
-//   }
-// }
-
+const actions = {
+  // 登录
+  async login({ commit }, data) {
+    const res = await login(data)
+    // axios请求会自动给返回数据加一层data
+    // 表示登录接口调用成功 也就是意味着你的用户名和密码是正确的
+    // 现在有用户token
+    // actions 修改state 必须通过mutations
+    commit('setToken', res.data.data.token)
+  },
+  // 获取用户信息
+  async getInfo({ commit }) {
+    const res = await getInfo()
+    console.log('用户资料', res)
+    commit('setUser', res.data.data)
+  },
+  // 重置用户信息
+  resetToken({ commit }) {
+    return new Promise((resolve, reject) => {
+      removeToken() // 清空本地存储的token
+      commit('RESET_TOKEN')
+      resolve()
+    })
+  },
+  logout({ commit }) {
+    return new Promise((resolve, reject) => {
+      removeToken() // 清空本地存储的token
+      commit('RESET_TOKEN')
+      resolve()
+    })
+  }
+}
 export default {
   namespaced: true,
-  state: {},
-  mutations: {},
-  actions: {}
+  state,
+  mutations,
+  actions
 }
 
