@@ -5,12 +5,13 @@ import NProgress from 'nprogress' // progress bar
 // import 'nprogress/nprogress.css' // progress bar style
 import { getToken } from '@/utils/auth' // get token from cookie
 import store from './store'
-// import getPageTitle from '@/utils/get-page-title'
+import getPageTitle from '@/utils/get-page-title'
 
 // NProgress.configure({ showSpinner: false }) // NProgress Configuration
 const whiteList = ['/login']
 router.beforeEach(async(to, from, next) => {
   NProgress.start()
+  document.title = getPageTitle(to.meta.title)
   const hasToken = getToken()
   if (hasToken) {
     if (to.path === '/login') {

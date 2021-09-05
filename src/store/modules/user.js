@@ -32,11 +32,13 @@ const actions = {
   // 登录
   async login({ commit }, data) {
     const res = await login(data)
-    // axios请求会自动给返回数据加一层data
-    // 表示登录接口调用成功 也就是意味着你的用户名和密码是正确的
-    // 现在有用户token
-    // actions 修改state 必须通过mutations
-    commit('setToken', res.data.data.token)
+    console.log('res登录', res)
+    if (res.status === 201) {
+      commit('setToken', res.data.data.token)
+      return 'ok'
+    } else {
+      return Promise.reject(new Error('failed'))
+    }
   },
   // 获取用户信息
   async getInfo({ commit }) {
